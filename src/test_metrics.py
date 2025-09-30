@@ -1,8 +1,13 @@
 import numpy as np
 import torch
+from device import DEVICE
 
 from metrics import AudioMetrics
-from metrics import AudioMetrics2
+
+# Repeating at a lot of places
+SAMPLE_RATE = 48000
+N_FFT = (SAMPLE_RATE * 64) // 1000 
+HOP_LENGTH = (SAMPLE_RATE * 16) // 1000
 
 def test_set_metrics(test_loader, model):
     metric_names = ["CSIG","CBAK","COVL","PESQ","SSNR","STOI"]

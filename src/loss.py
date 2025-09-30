@@ -2,6 +2,13 @@ from pesq import pesq
 from scipy import interpolate
 import torch
 import numpy as np
+from device import DEVICE
+from metrics import AudioMetrics2
+
+# Repeating at a lot of places
+SAMPLE_RATE = 48000
+N_FFT = (SAMPLE_RATE * 64) // 1000 
+HOP_LENGTH = (SAMPLE_RATE * 16) // 1000
 
 def resample(original, old_rate, new_rate):
     if old_rate != new_rate:

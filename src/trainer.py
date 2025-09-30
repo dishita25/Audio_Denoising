@@ -2,9 +2,15 @@ import torch
 from dataloader import SpeechDataset
 from torch.utils.data import Dataset, DataLoader
 from dataloader import *
-from device import *
+from Audio_Denoising.src.device import *
 import gc
+from tqdm import tqdm
+from loss import getMetricsonLoader
 
+# Repeating at a lot of places
+SAMPLE_RATE = 48000
+N_FFT = (SAMPLE_RATE * 64) // 1000 
+HOP_LENGTH = (SAMPLE_RATE * 16) // 1000 
 
 train_input_files = sorted(list(TRAIN_INPUT_DIR.rglob('*.wav')))
 train_target_files = sorted(list(TRAIN_TARGET_DIR.rglob('*.wav')))

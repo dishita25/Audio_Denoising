@@ -1,9 +1,15 @@
 import torch
+from pathlib import Path
 from torch.utils.data import Dataset, DataLoader
-from dcunet import DCUnet20
+from model.dcunet import DCUnet20
 from model import SpeechDataset
-
+from device import DEVICE
 from metrics import AudioMetrics
+
+# Repeating at a lot of places
+SAMPLE_RATE = 48000
+N_FFT = (SAMPLE_RATE * 64) // 1000 
+HOP_LENGTH = (SAMPLE_RATE * 16) // 1000
 
 model_weights_path = "Pretrained_Weights/Noise2Noise/white.pth"
 

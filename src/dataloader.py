@@ -1,10 +1,17 @@
 from pathlib import Path
+import numpy as np
 import torch
 import torchaudio
 from torch.utils.data import Dataset
 
 noise_class = "white" 
 training_type =  "Noise2Noise" 
+
+import os
+basepath = str(noise_class)+"_"+training_type
+os.makedirs(basepath,exist_ok=True)
+os.makedirs(basepath+"/Weights",exist_ok=True)
+os.makedirs(basepath+"/Samples",exist_ok=True)
 
 if noise_class == "white": 
     TRAIN_INPUT_DIR = Path('Datasets/WhiteNoise_Train_Input')
