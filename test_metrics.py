@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from device import DEVICE
+from src.device import DEVICE
 
 from metrics import AudioMetrics
 

@@ -1,12 +1,11 @@
-from dataloader import SpeechDataset
 import torch
 from torch.utils.data import Dataset, DataLoader
-from dataloader import *
+from src.dataloader import *
 from loss import wsdr_fn
-from model.dcunet import DCUnet20
-from trainer import train
+from src.model.dcunet import DCUnet20
+from Audio_Denoising.trainer import train
 import gc
-from device import *
+from src.device import *
 
 SAMPLE_RATE = 48000
 N_FFT = (SAMPLE_RATE * 64) // 1000 

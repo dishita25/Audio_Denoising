@@ -1,9 +1,9 @@
 import torch
 from pathlib import Path
 from torch.utils.data import Dataset, DataLoader
-from model.dcunet import DCUnet20
-from model import SpeechDataset
-from device import DEVICE
+from src.model.dcunet import DCUnet20
+from src.dataloader import SpeechDataset
+from src.device import DEVICE
 from metrics import AudioMetrics
 
 # Repeating at a lot of places

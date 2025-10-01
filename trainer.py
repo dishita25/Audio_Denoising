@@ -1,8 +1,7 @@
 import torch
-from dataloader import SpeechDataset
 from torch.utils.data import Dataset, DataLoader
-from dataloader import *
-from Audio_Denoising.src.device import *
+from src.dataloader import *
+from src.device import *
 import gc
 from tqdm import tqdm
 from loss import getMetricsonLoader

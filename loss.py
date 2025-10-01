@@ -2,7 +2,7 @@ from pesq import pesq
 from scipy import interpolate
 import torch
 import numpy as np
-from device import DEVICE
+from src.device import DEVICE
 from metrics import AudioMetrics2
 
 # Repeating at a lot of places
