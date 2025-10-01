@@ -3,7 +3,7 @@ from torch.utils.data import Dataset, DataLoader
 from src.dataloader import *
 from loss import wsdr_fn
 from src.model.dcunet import DCUnet20
-from Audio_Denoising.trainer import train
+from trainer import train
 import gc
 from src.device import *
 
