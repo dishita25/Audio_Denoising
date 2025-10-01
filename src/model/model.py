@@ -131,7 +131,7 @@ class Encoder(nn.Module):
         self.padding = padding
 
         self.cconv = CConv2d(in_channels=self.in_channels, out_channels=self.out_channels, 
-                             kernel_size=self.filter_size, stride=self.stride_size, padding=self.padding)
+                             kernel_size=(3,3), stride=self.stride_size, padding=self.padding)
         
         self.cbn = CBatchNorm2d(num_features=self.out_channels) 
         
@@ -164,7 +164,7 @@ class Decoder(nn.Module):
         self.last_layer = last_layer
         
         self.cconvt = CConvTranspose2d(in_channels=self.in_channels, out_channels=self.out_channels, 
-                             kernel_size=self.filter_size, stride=self.stride_size, output_padding=self.output_padding, padding=self.padding)
+                             kernel_size=(3,3), stride=self.stride_size, output_padding=self.output_padding, padding=self.padding)
         
         self.cbn = CBatchNorm2d(num_features=self.out_channels) 
         
