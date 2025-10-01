@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch
-from model import Encoder, Decoder
+from src.model.model import Encoder, Decoder
 
 class DCUnet20(nn.Module):
     """
