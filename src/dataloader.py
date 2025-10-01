@@ -79,9 +79,9 @@ class SpeechDataset(Dataset):
         
         # Short-time Fourier transform
         x_noisy_stft = torch.stft(input=x_noisy, n_fft=self.n_fft, 
-                                  hop_length=self.hop_length, normalized=True)
+                                  hop_length=self.hop_length, normalized=True, return_complex=True)
         x_clean_stft = torch.stft(input=x_clean, n_fft=self.n_fft, 
-                                  hop_length=self.hop_length, normalized=True)
+                                  hop_length=self.hop_length, normalized=True, return_complex=True)
         
         return x_noisy_stft, x_clean_stft
         
