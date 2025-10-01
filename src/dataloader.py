@@ -83,7 +83,11 @@ class SpeechDataset(Dataset):
         x_clean_stft = torch.stft(input=x_clean, n_fft=self.n_fft, 
                                   hop_length=self.hop_length, normalized=True, return_complex=True)
         
-        return x_noisy_stft, x_clean_stft
+        x_noisy_combined = torch.stack([x_noisy_stft.real, x_noisy_stft.imag], dim=1)
+        x_clean_combined = torch.stack([x_clean_stft.real, x_clean_stft.imag], dim=1)
+
+        return x_noisy_combined, x_clean_combined
+
         
     def _prepare_sample(self, waveform):
         waveform = waveform.numpy()
