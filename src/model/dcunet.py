@@ -66,6 +66,7 @@ class DCUnet20(nn.Module):
 
 
         if is_istft:
+            output = torch.complex(output[..., 0], output[..., 1])
             output = torch.istft(output, n_fft=self.n_fft, hop_length=self.hop_length, normalized=True)
         
         return output

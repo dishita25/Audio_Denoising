@@ -25,9 +25,14 @@ def resample(original, old_rate, new_rate):
 def wsdr_fn(x_, y_pred_, y_true_, eps=1e-8):
     # to time-domain waveform
     y_true_ = torch.squeeze(y_true_, 1)
-    y_true = torch.istft(y_true_, n_fft=N_FFT, hop_length=HOP_LENGTH, normalized=True)
+    # Convert to complex before istft
+    y_true_complex = torch.complex(y_true_[..., 0], y_true_[..., 1])
+    y_true = torch.istft(y_true_complex, n_fft=N_FFT, hop_length=HOP_LENGTH, normalized=True)
+    
     x_ = torch.squeeze(x_, 1)
-    x = torch.istft(x_, n_fft=N_FFT, hop_length=HOP_LENGTH, normalized=True)
+    # Convert to complex before istft
+    x_complex = torch.complex(x_[..., 0], x_[..., 1])
+    x = torch.istft(x_complex, n_fft=N_FFT, hop_length=HOP_LENGTH, normalized=True)
 
     y_pred = y_pred_.flatten(1)
     y_true = y_true.flatten(1)
