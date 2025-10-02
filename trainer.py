@@ -75,16 +75,17 @@ def test_epoch(net, test_loader, loss_fn, use_net=True):
 #     return train_ep_loss
 
 # this is zsn2n train for one loop
-def train_epoch(model, loader, loss_func, optimizer, device="cuda"):
+def train_epoch(model, loader, loss_func, optimizer, device="cuda", test_dataset):
     model.train()
     # extract one noisy audio sample from the loader here 
+    sample_noisy, sample_clean = test_dataset[0]
 
-    dataset = loader.dataset
-    # always pick the first sample
-    noisy_x, _ = dataset[0]   # ignore clean_x
-    noisy_x = noisy_x.unsqueeze(0).to(device) # add batch dim → [1, 2, F, T]
+    # dataset = loader.dataset
+    # # always pick the first sample
+    # noisy_x, _ = dataset[0]   # ignore clean_x
+    # noisy_x = noisy_x.unsqueeze(0).to(device) # add batch dim → [1, 2, F, T]
 
-    loss = loss_func(noisy_x, model)  # self-supervised ZSN2N
+    loss = loss_func(sample_noisy, model)  # self-supervised ZSN2N
 
     optimizer.zero_grad()
     loss.backward()
@@ -100,7 +101,7 @@ def denoise(model, noisy_img):
     return pred
 
 
-def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs):
+def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs, test_dataset):
     
     train_losses = []
     test_losses = []
@@ -120,10 +121,10 @@ def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs)
         # ---- training ----
         if training_type == "Noise2Noise":
             # self-supervised: directly adapt on test set
-            train_loss = train_epoch(net, test_loader, zsn2n_loss_func, optimizer)
+            train_loss = train_epoch(net, test_loader, zsn2n_loss_func, optimizer, test_dataset)
         else:
             # supervised: train on noisy/clean pairs
-            train_loss = train_epoch(net, train_loader, zsn2n_loss_func, optimizer)
+            train_loss = train_epoch(net, train_loader, zsn2n_loss_func, optimizer, test_dataset)
         
         test_loss = 0
         scheduler.step()
