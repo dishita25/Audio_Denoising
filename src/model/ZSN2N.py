@@ -73,3 +73,64 @@ class network(nn.Module):
 #                            normalized=True)
         
 #         return audio
+
+class network(nn.Module):
+    def __init__(self, n_chan=2, chan_embed=48, n_fft=512, hop_length=256, is_istft=True):
+        super(AudioDenoiseCNN, self).__init__()
+
+        self.n_fft = n_fft
+        self.hop_length = hop_length
+        self.is_istft = is_istft
+
+        self.act = nn.LeakyReLU(negative_slope=0.2, inplace=True)
+
+        # Expect input shape [B, 2, F, T]
+        self.conv1 = nn.Conv2d(n_chan, chan_embed, 3, padding=1)
+        self.conv2 = nn.Conv2d(chan_embed, chan_embed, 3, padding=1)
+        self.conv3 = nn.Conv2d(chan_embed, n_chan, 1)
+
+    def forward(self, x, is_istft=None):
+        """
+        x: [B, 1, F, T, 2]  (batch, dummy_chan, freq, time, real/imag)
+        """
+
+        # Handle input reshaping: [B, 1, F, T, 2] -> [B, 2, F, T]
+        if x.dim() == 5:
+            x = x.squeeze(1)          # [B, F, T, 2]
+            x = x.permute(0, 3, 1, 2) # [B, 2, F, T]
+
+        # Pass through CNN
+        noise_estimate = self.act(self.conv1(x))
+        noise_estimate = self.act(self.conv2(noise_estimate))
+        noise_estimate = self.conv3(noise_estimate)
+
+        # Subtract estimated noise
+        denoised_stft = x - noise_estimate
+
+        # Choose output format
+        if is_istft is None:
+            is_istft = self.is_istft
+
+        if is_istft:
+            return self._stft_to_audio(denoised_stft)  # -> waveform
+        else:
+            return denoised_stft                       # -> STFT tensor [B,2,F,T]
+
+    def _stft_to_audio(self, stft_tensor):
+        """
+        Convert STFT tensor back to waveform.
+        stft_tensor: [B, 2, F, T] (real/imag)
+        """
+        real = stft_tensor[:, 0, :, :]  # [B, F, T]
+        imag = stft_tensor[:, 1, :, :]  # [B, F, T]
+
+        complex_stft = torch.complex(real, imag)
+
+        audio = torch.istft(
+            complex_stft,
+            n_fft=self.n_fft,
+            hop_length=self.hop_length,
+            normalized=True
+        )
+
+        return audio

@@ -129,31 +129,83 @@ def mse(gt: torch.Tensor, pred:torch.Tensor)-> torch.Tensor:
     loss = torch.nn.MSELoss()
     return loss(gt,pred)
 
-def pair_downsampler(img):
-    #img has shape B C H W
-    c = img.shape[1]
+# def pair_downsampler(img):
+#     #img has shape B C H W
+#     c = img.shape[1]
 
-    filter1 = torch.FloatTensor([[[[0 ,0.5],[0.5, 0]]]]).to(img.device)
-    filter1 = filter1.repeat(c,1, 1, 1)
+#     filter1 = torch.FloatTensor([[[[0 ,0.5],[0.5, 0]]]]).to(img.device)
+#     filter1 = filter1.repeat(c,1, 1, 1)
 
-    filter2 = torch.FloatTensor([[[[0.5 ,0],[0, 0.5]]]]).to(img.device)
-    filter2 = filter2.repeat(c,1, 1, 1)
+#     filter2 = torch.FloatTensor([[[[0.5 ,0],[0, 0.5]]]]).to(img.device)
+#     filter2 = filter2.repeat(c,1, 1, 1)
 
+#     output1 = F.conv2d(img, filter1, stride=2, groups=c)
+#     output2 = F.conv2d(img, filter2, stride=2, groups=c)
+
+#     return output1, output2
+
+# def zsn2n_loss_func(noisy_stft, model):
+#     noisy1, noisy2 = pair_downsampler(noisy_stft)
+#     pred1 = noisy1 - model(noisy1)
+#     pred2 = noisy2 - model(noisy2)
+#     loss_res = 0.5 * (mse(noisy1, pred2) + mse(noisy2, pred1))
+
+#     noisy_denoised = noisy_stft - model(noisy_stft)
+#     denoised1, denoised2 = pair_downsampler(noisy_denoised)
+#     loss_cons = 0.5 * (mse(pred1, denoised1) + mse(pred2, denoised2))
+
+#     return loss_res + loss_cons
+
+
+
+import torch
+import torch.nn.functional as F
+
+mse = torch.nn.MSELoss()
+
+def pair_downsampler(img: torch.Tensor):
+    """
+    Downsamples an STFT image by 2x2 with two complementary filters.
+    img: [B, C, H, W] (C can be 2 for real/imag channels)
+    returns: two downsampled versions [B, C, H/2, W/2]
+    """
+    c = img.shape[1]  # number of channels
+
+    # Two 2x2 filters
+    filter1 = torch.tensor([[[[0, 0.5],
+                              [0.5, 0]]]], dtype=torch.float32, device=img.device)
+    filter1 = filter1.repeat(c, 1, 1, 1)
+
+    filter2 = torch.tensor([[[[0.5, 0],
+                              [0, 0.5]]]], dtype=torch.float32, device=img.device)
+    filter2 = filter2.repeat(c, 1, 1, 1)
+
+    # Apply depthwise conv (groups=c keeps channels separate)
     output1 = F.conv2d(img, filter1, stride=2, groups=c)
     output2 = F.conv2d(img, filter2, stride=2, groups=c)
 
     return output1, output2
-    
-def zsn2n_loss_func(noisy_stft, model):
+
+
+def zsn2n_loss_func(noisy_stft: torch.Tensor, model: torch.nn.Module):
+    """
+    Zero-Shot Noise2Noise Loss.
+    noisy_stft: [B, 2, F, T]
+    model: denoising CNN
+    """
+    # Split into two noisy versions
     noisy1, noisy2 = pair_downsampler(noisy_stft)
-    pred1 = noisy1 - model(noisy1)
-    pred2 = noisy2 - model(noisy2)
+
+    # Model predictions (residual noise estimate subtracted)
+    pred1 = noisy1 - model(noisy1, is_istft=False)
+    pred2 = noisy2 - model(noisy2, is_istft=False)
+
+    # Residual consistency loss
     loss_res = 0.5 * (mse(noisy1, pred2) + mse(noisy2, pred1))
 
-    noisy_denoised = noisy_stft - model(noisy_stft)
+    # Denoised consistency loss
+    noisy_denoised = noisy_stft - model(noisy_stft, is_istft=False)
     denoised1, denoised2 = pair_downsampler(noisy_denoised)
     loss_cons = 0.5 * (mse(pred1, denoised1) + mse(pred2, denoised2))
 
     return loss_res + loss_cons
-
-
