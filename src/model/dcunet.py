@@ -39,27 +39,27 @@ class DCUnet20(nn.Module):
        
         
     def forward(self, x, is_istft=True):
-        # print('x : ', x.shape)
+        print('x : ', x.shape)
         orig_x = x
         xs = []
         for i, encoder in enumerate(self.encoders):
             xs.append(x)
             x = encoder(x)
-            # print('Encoder : ', x.shape)
+            print('Encoder : ', x.shape)
             
         p = x
         for i, decoder in enumerate(self.decoders):
             p = decoder(p)
             if i == self.model_length - 1:
                 break
-            # print('Decoder : ', p.shape)
+            print('Decoder : ', p.shape)
             p = torch.cat([p, xs[self.model_length - 1 - i]], dim=1)
         
         # u9 - the mask
         
         mask = p
         
-        # print('mask : ', mask.shape)
+        print('mask : ', mask.shape)
         
         output = mask * orig_x
         output = torch.squeeze(output, 1)

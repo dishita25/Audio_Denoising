@@ -32,6 +32,8 @@ class CConv2d(nn.Module):
         
         
     def forward(self, x):
+        print("Inside CConv2D layer")
+        print(x.shape)
         x_real = x[..., 0]
         x_im = x[..., 1]
         
@@ -39,6 +41,7 @@ class CConv2d(nn.Module):
         c_im = self.im_conv(x_real) + self.real_conv(x_im)
         
         output = torch.stack([c_real, c_im], dim=-1)
+        print(output.shape)
         return output
     
 

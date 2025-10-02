@@ -85,8 +85,6 @@ class SpeechDataset(Dataset):
                                 hop_length=self.hop_length, normalized=True,
                                 return_complex=False)
         
-        # x_noisy_stft = x_noisy_stft.squeeze(0).permute(2, 0, 1)  # [2, freq, time]
-        # x_clean_stft = x_clean_stft.squeeze(0).permute(2, 0, 1)  # [2, freq, time]
 
         return x_noisy_stft, x_clean_stft
         
