@@ -2,8 +2,11 @@ import torch.nn.functional as F
 import torch.nn as nn
 
 class network(nn.Module):
-    def __init__(self, n_chan, chan_embed=48):
+    def __init__(self, n_chan, chan_embed=48, n_fft=N_FFT, hop_length=HOP_LENGTH):
         super(network, self).__init__()
+
+        self.n_fft = n_fft
+        self.hop_length = hop_length
 
         self.act = nn.LeakyReLU(negative_slope=0.2, inplace=True)
 
