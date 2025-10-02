@@ -124,6 +124,11 @@ def getMetricsonLoader(loader, net, use_net=True):
     return results
 
 
+def mse(gt: torch.Tensor, pred:torch.Tensor)-> torch.Tensor:
+    loss = torch.nn.MSELoss()
+    return loss(gt,pred)
+
+
 def zsn2n_loss_func(noisy_stft, model):
     noisy1, noisy2 = pair_downsampler(noisy_stft)
     pred1 = noisy1 - model(noisy1)
