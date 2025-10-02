@@ -59,7 +59,9 @@ print("=" * 40)
 gc.collect()
 torch.cuda.empty_cache()
 
+x = train_loader[1][0] 
 zsn2n = DCUnet20(n_fft=N_FFT, hop_length=HOP_LENGTH).to(DEVICE)
+out = zsn2n(x)
 optimizer = torch.optim.Adam(zsn2n.parameters())
 loss_fn = zsn2n_loss_func
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.1)
