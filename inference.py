@@ -1,7 +1,7 @@
 import torch
 from pathlib import Path
 from torch.utils.data import Dataset, DataLoader
-from src.model.dcunet import DCUnet20
+from src.model.ZSN2N import network
 from src.dataloader import SpeechDataset
 from src.device import DEVICE
 from metrics import AudioMetrics
@@ -13,8 +13,8 @@ HOP_LENGTH = (SAMPLE_RATE * 16) // 1000
 
 model_weights_path = "Pretrained_Weights/Noise2Noise/white.pth"
 
-dcunet20 = DCUnet20(N_FFT, HOP_LENGTH).to(DEVICE)
-optimizer = torch.optim.Adam(dcunet20.parameters())
+zsn2n = network(N_FFT, HOP_LENGTH).to(DEVICE)
+optimizer = torch.optim.Adam(zsn2n.parameters())
 
 checkpoint = torch.load(model_weights_path,
                         map_location=torch.device('cpu')
@@ -29,18 +29,18 @@ test_dataset = SpeechDataset(test_noisy_files, test_clean_files, N_FFT, HOP_LENG
 # For testing purpose
 test_loader_single_unshuffled = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
-dcunet20.load_state_dict(checkpoint)
+zsn2n.load_state_dict(checkpoint)
 
 index = 4
 
-dcunet20.eval()
+zsn2n.eval()
 test_loader_single_unshuffled_iter = iter(test_loader_single_unshuffled)
 
 x_n, x_c = next(test_loader_single_unshuffled_iter)
 for _ in range(index):
     x_n, x_c = next(test_loader_single_unshuffled_iter)
 
-x_est = dcunet20(x_n, is_istft=True)
+x_est = zsn2n(x_n, is_istft=True)
 
 x_est_np = x_est[0].view(-1).detach().cpu().numpy()
 x_c_np = torch.istft(torch.squeeze(x_c[0], 1), n_fft=N_FFT, hop_length=HOP_LENGTH, normalized=True).view(-1).detach().cpu().numpy()
