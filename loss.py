@@ -122,3 +122,16 @@ def getMetricsonLoader(loader, net, use_net=True):
     for i in range(5):
         print("{} : {:.3f}+/-{:.3f}".format(metric_names[i], np.mean(overall_metrics[i]), np.std(overall_metrics[i])))
     return results
+
+
+def zsn2n_loss_func(noisy_stft, model):
+    noisy1, noisy2 = pair_downsampler(noisy_stft)
+    pred1 = noisy1 - model(noisy1)
+    pred2 = noisy2 - model(noisy2)
+    loss_res = 0.5 * (mse(noisy1, pred2) + mse(noisy2, pred1))
+
+    noisy_denoised = noisy_stft - model(noisy_stft)
+    denoised1, denoised2 = pair_downsampler(noisy_denoised)
+    loss_cons = 0.5 * (mse(pred1, denoised1) + mse(pred2, denoised2))
+
+    return loss_res + loss_cons
