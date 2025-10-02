@@ -59,8 +59,8 @@ gc.collect()
 torch.cuda.empty_cache()
 
 zsn2n = network(N_FFT, HOP_LENGTH).to(DEVICE)
-optimizer = torch.optim.Adam(network.parameters())
+optimizer = torch.optim.Adam(zsn2n.parameters())
 loss_fn = zsn2n_loss_func
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.1)
 
-train_losses, test_losses = train(network, train_loader, test_loader, loss_fn, optimizer, scheduler, 4)
+train_losses, test_losses = train(zsn2n, train_loader, test_loader, loss_fn, optimizer, scheduler, 4)
