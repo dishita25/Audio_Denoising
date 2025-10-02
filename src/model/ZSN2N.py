@@ -39,7 +39,7 @@ class network(nn.Module):
         self.conv2 = nn.Conv2d(chan_embed, chan_embed, 3, padding=1)
         self.conv3 = nn.Conv2d(chan_embed, n_chan, 1)
 
-    def forward(self, x, is_istft):
+    def forward(self, x, is_istft=True):
         # Original network processing - this estimates the noise
         noise_estimate = self.act(self.conv1(x))
         noise_estimate = self.act(self.conv2(noise_estimate))
