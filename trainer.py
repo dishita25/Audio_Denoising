@@ -98,6 +98,60 @@ def denoise(model, noisy_img):
 
     return pred
 
+
+def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs):
+    
+    train_losses = []
+    test_losses = []
+
+    for e in tqdm(range(epochs)):
+
+        # ---- initial evaluation only if supervised ----
+        if e == 0 and training_type == "Noise2Clean":
+            print("Pre-training evaluation")
+            testmet = getMetricsonLoader(test_loader, net, False)
+            with open(basepath + "/results.txt", "w+") as f:
+                f.write("Initial : \n")
+                f.write(str(testmet))
+                f.write("\n")
+        
+        # ---- training ----
+        if training_type == "Noise2Noise":
+            # self-supervised: directly adapt on test set
+            train_loss = train_epoch(net, test_loader, loss_fn, optimizer)
+        else:
+            # supervised: train on noisy/clean pairs
+            train_loss = train_epoch(net, train_loader, loss_fn, optimizer)
+        
+        test_loss = 0
+        scheduler.step()
+        
+        print("Saving model....")
+        
+        # ---- evaluation ----
+        with torch.no_grad():
+            test_loss, testmet = test_epoch(net, test_loader, loss_fn, use_net=True)
+
+        train_losses.append(train_loss)
+        test_losses.append(test_loss)
+        
+        with open(basepath + "/results.txt", "a") as f:
+            f.write("Epoch :" + str(e+1) + "\n" + str(testmet))
+            f.write("\n")
+        
+        print("Results written")
+        
+        torch.save(net.state_dict(), basepath + '/Weights/dc20_model_' + str(e+1) + '.pth')
+        torch.save(optimizer.state_dict(), basepath + '/Weights/dc20_opt_' + str(e+1) + '.pth')
+        
+        print("Models saved")
+
+        # clear cache
+        torch.cuda.empty_cache()
+        gc.collect()
+    
+    return train_loss, test_loss
+
 # def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs):
     
 #     train_losses = []
@@ -155,56 +209,3 @@ def denoise(model, noisy_img):
 #         #              "Test Loss: {:.6f}".format(test_loss))
 #     return train_loss, test_loss
 
-
-def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs):
-    
-    train_losses = []
-    test_losses = []
-
-    for e in tqdm(range(epochs)):
-
-        # ---- initial evaluation only if supervised ----
-        if e == 0 and training_type == "Noise2Clean":
-            print("Pre-training evaluation")
-            testmet = getMetricsonLoader(test_loader, net, False)
-            with open(basepath + "/results.txt", "w+") as f:
-                f.write("Initial : \n")
-                f.write(str(testmet))
-                f.write("\n")
-        
-        # ---- training ----
-        if training_type == "Noise2Noise":
-            # self-supervised: directly adapt on test set
-            train_loss = train_epoch(net, test_loader, loss_fn, optimizer)
-        else:
-            # supervised: train on noisy/clean pairs
-            train_loss = train_epoch(net, train_loader, loss_fn, optimizer)
-        
-        test_loss = 0
-        scheduler.step()
-        
-        print("Saving model....")
-        
-        # ---- evaluation ----
-        with torch.no_grad():
-            test_loss, testmet = test_epoch(net, test_loader, loss_fn, use_net=True)
-
-        train_losses.append(train_loss)
-        test_losses.append(test_loss)
-        
-        with open(basepath + "/results.txt", "a") as f:
-            f.write("Epoch :" + str(e+1) + "\n" + str(testmet))
-            f.write("\n")
-        
-        print("Results written")
-        
-        torch.save(net.state_dict(), basepath + '/Weights/dc20_model_' + str(e+1) + '.pth')
-        torch.save(optimizer.state_dict(), basepath + '/Weights/dc20_opt_' + str(e+1) + '.pth')
-        
-        print("Models saved")
-
-        # clear cache
-        torch.cuda.empty_cache()
-        gc.collect()
-    
-    return train_loss, test_loss
