@@ -74,8 +74,17 @@ def getMetricsonLoader(loader, net, use_net=True):
             noisy = data[0]
             clean = data[1]
             if use_net: # Forward of net returns the istft version
-                x_est = net(noisy.to(DEVICE), is_istft=True)
+                model_output = net(noisy.to(DEVICE))  # This gives you noise prediction in STFT domain
+
+                # For ZSN2N: model predicts noise, so denoised = input - predicted_noise
+                denoised_stft = noisy.to(DEVICE) - model_output
+
+                # Convert to time domain for metrics
+                denoised_squeezed = torch.squeeze(denoised_stft, 1)
+                denoised_complex = torch.complex(denoised_squeezed[..., 0], denoised_squeezed[..., 1])
+                x_est = torch.istft(denoised_complex, n_fft=N_FFT, hop_length=HOP_LENGTH, normalized=True)
                 x_est_np = x_est.view(-1).detach().cpu().numpy()
+                
             else:
                 noisy_squeezed = torch.squeeze(noisy, 1)
                 noisy_complex = torch.complex(noisy_squeezed[..., 0], noisy_squeezed[..., 1])
