@@ -51,8 +51,8 @@ def test_epoch(net, test_loader, loss_fn, use_net=True):
     
     #print("Actual compute done...testing now")
     
-    #testmet = getMetricsonLoader(test_loader,net,use_net) # ERROR POINT
-    testmet = None
+    testmet = getMetricsonLoader(test_loader,net,use_net) # ERROR POINT
+    #testmet = None
     # have to integrate this within this test_epoch's function sign 
     # def test(model, noisy_img, clean_img):
 
@@ -111,6 +111,7 @@ def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs)
         if e == 0 and training_type == "Noise2Clean":
             print("Pre-training evaluation")
             testmet = getMetricsonLoader(test_loader, net, False)
+            print("After getmetrics")
             with open(basepath + "/results.txt", "w+") as f:
                 f.write("Initial : \n")
                 f.write(str(testmet))
@@ -130,13 +131,13 @@ def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs)
         print("Saving model....")
         
         # ---- evaluation ----
-        # with torch.no_grad():
-        #     test_loss, testmet = test_epoch(net, test_loader, loss_fn, use_net=True)
+        with torch.no_grad():
+            test_loss, testmet = test_epoch(net, test_loader, loss_fn, use_net=True)
 
         train_losses.append(train_loss)
-        # test_losses.append(test_loss)
+        test_losses.append(test_loss)
 
-        testmet = "hi"
+        #testmet = "hi"
         
         with open(basepath + "/results.txt", "a") as f:
             f.write("Epoch :" + str(e+1) + "\n" + str(testmet))

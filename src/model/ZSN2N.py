@@ -27,7 +27,7 @@ HOP_LENGTH = (SAMPLE_RATE * 16) // 1000
 #         return x
 
 class network(nn.Module):
-    def __init__(self, n_chan, chan_embed=48, n_fft=N_FFT, hop_length=HOP_LENGTH):
+    def __init__(self, n_chan, chan_embed=48, n_fft=N_FFT, hop_length=HOP_LENGTH, is_istft=True):
         super(network, self).__init__()
 
         self.n_fft = n_fft
@@ -39,7 +39,7 @@ class network(nn.Module):
         self.conv2 = nn.Conv2d(chan_embed, chan_embed, 3, padding=1)
         self.conv3 = nn.Conv2d(chan_embed, n_chan, 1)
 
-    def forward(self, x, is_istft=False):
+    def forward(self, x, is_istft):
         # Original network processing - this estimates the noise
         noise_estimate = self.act(self.conv1(x))
         noise_estimate = self.act(self.conv2(noise_estimate))
