@@ -74,17 +74,16 @@ def test_epoch(net, test_loader, loss_fn, use_net=True):
 #     return train_ep_loss
 
 # this is zsn2n train for one loop
-def train_epoch(model, train_loader, loss_func,optimizer):
-
+def train_epoch(model, loader, loss_func, optimizer, device="cuda"):
+    model.train()
     # extract one noisy audio sample from the loader here 
-    dataset = train_loader.dataset  
 
+    dataset = loader.dataset
     # always pick the first sample
-    noisy_x, clean_x = dataset[0]  
+    noisy_x, _ = dataset[0]   # ignore clean_x
+    noisy_x = noisy_x.unsqueeze(0).to(device) # add batch dim → [1, 2, F, T]
 
-    noisy_x = noisy_x.unsqueeze(0).to(device)   # add batch dim → [1, 2, F, T]
-
-    loss = loss_func(noisy_img)
+    loss = loss_func(noisy_x, model)  # self-supervised ZSN2N
 
     optimizer.zero_grad()
     loss.backward()
@@ -99,6 +98,64 @@ def denoise(model, noisy_img):
 
     return pred
 
+# def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs):
+    
+#     train_losses = []
+#     test_losses = []
+
+#     for e in tqdm(range(epochs)):
+
+#         # first evaluating for comparison
+        
+#         if e == 0 and training_type=="Noise2Clean":
+#             print("Pre-training evaluation")
+#             #with torch.no_grad():
+#             #    test_loss,testmet = test_epoch(net, test_loader, loss_fn,use_net=False)
+#             #print("Had to load model.. checking if deets match")
+#             testmet = getMetricsonLoader(test_loader,net,False)    # again, modified cuz im loading
+#             #test_losses.append(test_loss)
+#             #print("Loss before training:{:.6f}".format(test_loss))
+        
+#             with open(basepath + "/results.txt","w+") as f:
+#                 f.write("Initial : \n")
+#                 f.write(str(testmet))
+#                 f.write("\n")
+        
+#         # directly giving it test bcs its self supervised
+#         train_loss = train_epoch(net, test_loader, loss_fn, optimizer)
+#         test_loss = 0
+#         scheduler.step()
+#         print("Saving model....")
+        
+#         with torch.no_grad():
+#             test_loss, testmet = test_epoch(net, test_loader, loss_fn,use_net=True)
+
+#         train_losses.append(train_loss)
+#         test_losses.append(test_loss)
+        
+#         #print("skipping testing cuz peak autism idk")
+        
+#         with open(basepath + "/results.txt","a") as f:
+#             f.write("Epoch :"+str(e+1) + "\n" + str(testmet))
+#             f.write("\n")
+        
+#         print("OPed to txt")
+        
+#         torch.save(net.state_dict(), basepath +'/Weights/dc20_model_'+str(e+1)+'.pth')
+#         torch.save(optimizer.state_dict(), basepath+'/Weights/dc20_opt_'+str(e+1)+'.pth')
+        
+#         print("Models saved")
+
+#         # clear cache
+#         torch.cuda.empty_cache()
+#         gc.collect()
+
+#         #print("Epoch: {}/{}...".format(e+1, epochs),
+#         #              "Loss: {:.6f}...".format(train_loss),
+#         #              "Test Loss: {:.6f}".format(test_loss))
+#     return train_loss, test_loss
+
+
 def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs):
     
     train_losses = []
@@ -106,52 +163,48 @@ def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs)
 
     for e in tqdm(range(epochs)):
 
-        # first evaluating for comparison
-        
-        if e == 0 and training_type=="Noise2Clean":
+        # ---- initial evaluation only if supervised ----
+        if e == 0 and training_type == "Noise2Clean":
             print("Pre-training evaluation")
-            #with torch.no_grad():
-            #    test_loss,testmet = test_epoch(net, test_loader, loss_fn,use_net=False)
-            #print("Had to load model.. checking if deets match")
-            testmet = getMetricsonLoader(test_loader,net,False)    # again, modified cuz im loading
-            #test_losses.append(test_loss)
-            #print("Loss before training:{:.6f}".format(test_loss))
-        
-            with open(basepath + "/results.txt","w+") as f:
+            testmet = getMetricsonLoader(test_loader, net, False)
+            with open(basepath + "/results.txt", "w+") as f:
                 f.write("Initial : \n")
                 f.write(str(testmet))
                 f.write("\n")
         
-        # directly giving it test bcs its self supervised
-        train_loss = train_epoch(net, test_loader, loss_fn, optimizer)
+        # ---- training ----
+        if training_type == "Noise2Noise":
+            # self-supervised: directly adapt on test set
+            train_loss = train_epoch(net, test_loader, loss_fn, optimizer)
+        else:
+            # supervised: train on noisy/clean pairs
+            train_loss = train_epoch(net, train_loader, loss_fn, optimizer)
+        
         test_loss = 0
         scheduler.step()
+        
         print("Saving model....")
         
+        # ---- evaluation ----
         with torch.no_grad():
-            test_loss, testmet = test_epoch(net, test_loader, loss_fn,use_net=True)
+            test_loss, testmet = test_epoch(net, test_loader, loss_fn, use_net=True)
 
         train_losses.append(train_loss)
         test_losses.append(test_loss)
         
-        #print("skipping testing cuz peak autism idk")
-        
-        with open(basepath + "/results.txt","a") as f:
-            f.write("Epoch :"+str(e+1) + "\n" + str(testmet))
+        with open(basepath + "/results.txt", "a") as f:
+            f.write("Epoch :" + str(e+1) + "\n" + str(testmet))
             f.write("\n")
         
-        print("OPed to txt")
+        print("Results written")
         
-        torch.save(net.state_dict(), basepath +'/Weights/dc20_model_'+str(e+1)+'.pth')
-        torch.save(optimizer.state_dict(), basepath+'/Weights/dc20_opt_'+str(e+1)+'.pth')
+        torch.save(net.state_dict(), basepath + '/Weights/dc20_model_' + str(e+1) + '.pth')
+        torch.save(optimizer.state_dict(), basepath + '/Weights/dc20_opt_' + str(e+1) + '.pth')
         
         print("Models saved")
 
         # clear cache
         torch.cuda.empty_cache()
         gc.collect()
-
-        #print("Epoch: {}/{}...".format(e+1, epochs),
-        #              "Loss: {:.6f}...".format(train_loss),
-        #              "Test Loss: {:.6f}".format(test_loss))
+    
     return train_loss, test_loss
