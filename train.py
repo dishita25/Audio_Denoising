@@ -61,6 +61,7 @@ torch.cuda.empty_cache()
 
 # x = train_loader[1][0] 
 zsn2n = network(n_chan=2, chan_embed=48).to(DEVICE) 
+sample_noisy = sample_noisy.to(DEVICE)
 out = zsn2n(sample_noisy)
 optimizer = torch.optim.Adam(zsn2n.parameters())
 loss_fn = zsn2n_loss_func
