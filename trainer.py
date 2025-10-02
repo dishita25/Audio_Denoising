@@ -4,7 +4,7 @@ from src.dataloader import *
 from src.device import *
 import gc
 from tqdm import tqdm
-from loss import getMetricsonLoader
+from loss import getMetricsonLoader, zsn2n_loss_func
 
 # Repeating at a lot of places
 SAMPLE_RATE = 48000
@@ -51,7 +51,16 @@ def test_epoch(net, test_loader, loss_fn, use_net=True):
     
     #print("Actual compute done...testing now")
     
-    testmet = getMetricsonLoader(test_loader,net,use_net)
+    testmet = getMetricsonLoader(test_loader,net,use_net) # ERROR POINT
+    # have to integrate this within this test_epoch's function sign 
+    # def test(model, noisy_img, clean_img):
+
+    #     with torch.no_grad():
+    #         pred = torch.clamp(noisy_img - model(noisy_img),0,1)
+    #         MSE = mse(clean_img, pred).item()
+    #         PSNR = 10*np.log10(1/MSE)
+
+    #     return PSNR
 
     # clear cache
     gc.collect()
@@ -59,36 +68,31 @@ def test_epoch(net, test_loader, loss_fn, use_net=True):
     
     return test_ep_loss, testmet
 
+# keeping original func sign for reference
+# def train_epoch(net, train_loader, loss_fn, optimizer):
+#     net.train()
 
-def train_epoch(net, train_loader, loss_fn, optimizer):
-    net.train()
-    train_ep_loss = 0.
-    counter = 0
-    for noisy_x, clean_x in train_loader:
+#     return train_ep_loss
 
-        noisy_x, clean_x = noisy_x.to(DEVICE), clean_x.to(DEVICE)
+# this is zsn2n train for one loop
+def train_epoch(model, train_loader, loss_func,optimizer):
 
-        # zero  gradients
-        net.zero_grad()
+# extract one noisy audio sample from the loader here 
+  loss = loss_func(noisy_img)
 
-        # get the output from the model
-        pred_x = net(noisy_x)
+  optimizer.zero_grad()
+  loss.backward()
+  optimizer.step()
 
-        # calculate loss
-        loss = loss_fn(noisy_x, pred_x, clean_x)
-        loss.backward()
-        optimizer.step()
+  return loss.item()
 
-        train_ep_loss += loss.item() 
-        counter += 1
 
-    train_ep_loss /= counter
+def denoise(model, noisy_img):
 
-    # clear cache
-    gc.collect()
-    torch.cuda.empty_cache()
-    return train_ep_loss
+    with torch.no_grad():
+        pred = torch.clamp( noisy_img - model(noisy_img),0,1)
 
+    return pred
 
 def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs):
     

@@ -129,20 +129,6 @@ def mse(gt: torch.Tensor, pred:torch.Tensor)-> torch.Tensor:
     loss = torch.nn.MSELoss()
     return loss(gt,pred)
 
-
-def zsn2n_loss_func(noisy_stft, model):
-    noisy1, noisy2 = pair_downsampler(noisy_stft)
-    pred1 = noisy1 - model(noisy1)
-    pred2 = noisy2 - model(noisy2)
-    loss_res = 0.5 * (mse(noisy1, pred2) + mse(noisy2, pred1))
-
-    noisy_denoised = noisy_stft - model(noisy_stft)
-    denoised1, denoised2 = pair_downsampler(noisy_denoised)
-    loss_cons = 0.5 * (mse(pred1, denoised1) + mse(pred2, denoised2))
-
-    return loss_res + loss_cons
-
-
 def pair_downsampler(img):
     #img has shape B C H W
     c = img.shape[1]
@@ -157,3 +143,17 @@ def pair_downsampler(img):
     output2 = F.conv2d(img, filter2, stride=2, groups=c)
 
     return output1, output2
+    
+def zsn2n_loss_func(noisy_stft, model):
+    noisy1, noisy2 = pair_downsampler(noisy_stft)
+    pred1 = noisy1 - model(noisy1)
+    pred2 = noisy2 - model(noisy2)
+    loss_res = 0.5 * (mse(noisy1, pred2) + mse(noisy2, pred1))
+
+    noisy_denoised = noisy_stft - model(noisy_stft)
+    denoised1, denoised2 = pair_downsampler(noisy_denoised)
+    loss_cons = 0.5 * (mse(pred1, denoised1) + mse(pred2, denoised2))
+
+    return loss_res + loss_cons
+
+
