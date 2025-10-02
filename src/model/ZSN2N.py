@@ -1,6 +1,10 @@
 import torch.nn.functional as F
 import torch.nn as nn
 
+SAMPLE_RATE = 48000
+N_FFT = (SAMPLE_RATE * 64) // 1000 
+HOP_LENGTH = (SAMPLE_RATE * 16) // 1000 
+
 class network(nn.Module):
     def __init__(self, n_chan, chan_embed=48, n_fft=N_FFT, hop_length=HOP_LENGTH):
         super(network, self).__init__()
