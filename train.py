@@ -58,7 +58,7 @@ print("=" * 40)
 gc.collect()
 torch.cuda.empty_cache()
 
-zsn2n = network(N_FFT, HOP_LENGTH).to(DEVICE)
+zsn2n = network(n_chan = 2, chan_embed=48).to(DEVICE)
 optimizer = torch.optim.Adam(zsn2n.parameters())
 loss_fn = zsn2n_loss_func
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.1)
