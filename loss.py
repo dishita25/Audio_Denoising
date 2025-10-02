@@ -95,13 +95,26 @@ def getMetricsonLoader(loader, net, use_net=True):
 
                 
             else:
-                noisy_squeezed = torch.squeeze(noisy, 1)
-                noisy_complex = torch.complex(noisy_squeezed[..., 0], noisy_squeezed[..., 1])
+                # CORRECT:
+                noisy_squeezed = torch.squeeze(noisy, 0)  # Remove batch dim: [2, 1537, 215]
+                noisy_real = noisy_squeezed[0]  # [1537, 215]
+                noisy_imag = noisy_squeezed[1]  # [1537, 215]
+                noisy_complex = torch.complex(noisy_real, noisy_imag)  # [1537, 215]
                 x_est_np = torch.istft(noisy_complex, n_fft=N_FFT, hop_length=HOP_LENGTH, normalized=True).view(-1).detach().cpu().numpy()
 
-            clean_squeezed = torch.squeeze(clean, 1)
-            clean_complex = torch.complex(clean_squeezed[..., 0], clean_squeezed[..., 1])
+
+            # CORRECT: Same fix as the model output section
+            clean_squeezed = torch.squeeze(clean, 0)  # Remove batch dim: [2, 1537, 215]
+
+            # Split real and imaginary parts from channel dimension  
+            clean_real = clean_squeezed[0]  # [1537, 215]
+            clean_imag = clean_squeezed[1]  # [1537, 215]
+
+            # Create complex tensor with correct shape
+            clean_complex = torch.complex(clean_real, clean_imag)  # [1537, 215]
+
             x_clean_np = torch.istft(clean_complex, n_fft=N_FFT, hop_length=HOP_LENGTH, normalized=True).view(-1).detach().cpu().numpy()
+
 
         
             metrics = AudioMetrics2(x_clean_np, x_est_np, 48000)
