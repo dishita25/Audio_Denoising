@@ -22,8 +22,8 @@ print("No. of Testing files:",len(test_noisy_files))
 
 test_dataset = SpeechDataset(test_noisy_files, test_clean_files, N_FFT, HOP_LENGTH)
 train_dataset = SpeechDataset(train_input_files, train_target_files, N_FFT, HOP_LENGTH)
-test_loader = DataLoader(test_dataset, batch_size=1, shuffle=True)
-train_loader = DataLoader(train_dataset, batch_size=2, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
+train_loader = DataLoader(train_dataset, batch_size=2, shuffle=False)
 
 # For testing purpose
 test_loader_single_unshuffled = DataLoader(test_dataset, batch_size=1, shuffle=False)
@@ -71,21 +71,26 @@ def test_epoch(net, test_loader, loss_fn, use_net=True):
 # keeping original func sign for reference
 # def train_epoch(net, train_loader, loss_fn, optimizer):
 #     net.train()
-
 #     return train_ep_loss
 
 # this is zsn2n train for one loop
 def train_epoch(model, train_loader, loss_func,optimizer):
 
-# extract one noisy audio sample from the loader here 
-  loss = loss_func(noisy_img)
+    # extract one noisy audio sample from the loader here 
+    dataset = train_loader.dataset  
 
-  optimizer.zero_grad()
-  loss.backward()
-  optimizer.step()
+    # always pick the first sample
+    noisy_x, clean_x = dataset[0]  
 
-  return loss.item()
+    noisy_x = noisy_x.unsqueeze(0).to(device)   # add batch dim → [1, 2, F, T]
 
+    loss = loss_func(noisy_img)
+
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+    return loss.item()
 
 def denoise(model, noisy_img):
 
@@ -117,8 +122,8 @@ def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs)
                 f.write(str(testmet))
                 f.write("\n")
         
-        
-        train_loss = train_epoch(net, train_loader, loss_fn, optimizer)
+        # directly giving it test bcs its self supervised
+        train_loss = train_epoch(net, test_loader, loss_fn, optimizer)
         test_loss = 0
         scheduler.step()
         print("Saving model....")
