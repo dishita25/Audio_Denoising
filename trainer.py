@@ -120,10 +120,10 @@ def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs)
         # ---- training ----
         if training_type == "Noise2Noise":
             # self-supervised: directly adapt on test set
-            train_loss = train_epoch(net, test_loader, loss_fn, optimizer)
+            train_loss = train_epoch(net, test_loader, zsn2n_loss_func, optimizer)
         else:
             # supervised: train on noisy/clean pairs
-            train_loss = train_epoch(net, train_loader, loss_fn, optimizer)
+            train_loss = train_epoch(net, train_loader, zsn2n_loss_func, optimizer)
         
         test_loss = 0
         scheduler.step()
@@ -132,7 +132,7 @@ def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs)
         
         # ---- evaluation ----
         with torch.no_grad():
-            test_loss, testmet = test_epoch(net, test_loader, loss_fn, use_net=True)
+            test_loss, testmet = test_epoch(net, test_loader, zsn2n_loss_func, use_net=True)
 
         train_losses.append(train_loss)
         test_losses.append(test_loss)
