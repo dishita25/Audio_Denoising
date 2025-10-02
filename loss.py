@@ -190,22 +190,30 @@ def pair_downsampler(img: torch.Tensor):
 def zsn2n_loss_func(noisy_stft: torch.Tensor, model: torch.nn.Module):
     """
     Zero-Shot Noise2Noise Loss.
-    noisy_stft: [B, 2, F, T]
-    model: denoising CNN
+    noisy_stft: [B, 2, F, T] - batch with 2 channels (real/imag)
     """
-    # Split into two noisy versions
+    # Ensure input has correct dimensions
+    if len(noisy_stft.shape) == 3:  # [2, F, T]
+        noisy_stft = noisy_stft.unsqueeze(0)  # [1, 2, F, T]
+    
+    # Split into two noisy versions  
     noisy1, noisy2 = pair_downsampler(noisy_stft)
-
-    # Model predictions (residual noise estimate subtracted)
-    pred1 = noisy1 - model(noisy1, is_istft=False)
-    pred2 = noisy2 - model(noisy2, is_istft=False)
-
-    # Residual consistency loss
-    loss_res = 0.5 * (mse(noisy1, pred2) + mse(noisy2, pred1))
-
-    # Denoised consistency loss
-    noisy_denoised = noisy_stft - model(noisy_stft, is_istft=False)
+    
+    # Model predictions - NOTE: ZSN2N model should return noise, not clean signal
+    noise1 = model(noisy1)  # Predict noise directly
+    noise2 = model(noisy2)  # Predict noise directly
+    
+    pred1 = noisy1 - noise1  # Denoised = noisy - predicted_noise
+    pred2 = noisy2 - noise2  # Denoised = noisy - predicted_noise
+    
+    # Cross-prediction loss (key ZSN2N innovation)
+    loss_res = 0.5 * (mse(pred1, noisy2) + mse(pred2, noisy1))
+    
+    # Consistency loss
+    full_noise = model(noisy_stft)
+    noisy_denoised = noisy_stft - full_noise
     denoised1, denoised2 = pair_downsampler(noisy_denoised)
+    
     loss_cons = 0.5 * (mse(pred1, denoised1) + mse(pred2, denoised2))
 
     return loss_res + loss_cons

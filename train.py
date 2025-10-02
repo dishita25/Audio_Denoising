@@ -60,7 +60,7 @@ gc.collect()
 torch.cuda.empty_cache()
 
 # x = train_loader[1][0] 
-zsn2n = DCUnet20(n_fft=N_FFT, hop_length=HOP_LENGTH).to(DEVICE)
+zsn2n = network(n_chan=2, chan_embed=48).to(DEVICE) 
 out = zsn2n(sample_noisy)
 optimizer = torch.optim.Adam(zsn2n.parameters())
 loss_fn = zsn2n_loss_func

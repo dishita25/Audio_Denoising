@@ -75,18 +75,16 @@ def test_epoch(net, test_loader, loss_fn, use_net=True):
 #     return train_ep_loss
 
 # this is zsn2n train for one loop
-def train_epoch(model, loader, loss_func, optimizer, device="cuda", test_dataset):
+def train_epoch(model, test_dataset, loss_func, optimizer, device="cuda"):
     model.train()
-    # extract one noisy audio sample from the loader here 
-    sample_noisy, sample_clean = test_dataset[0]
-
-    # dataset = loader.dataset
-    # # always pick the first sample
-    # noisy_x, _ = dataset[0]   # ignore clean_x
-    # noisy_x = noisy_x.unsqueeze(0).to(device) # add batch dim → [1, 2, F, T]
-
-    loss = loss_func(sample_noisy, model)  # self-supervised ZSN2N
-
+    
+    # Get single noisy sample (ZSN2N trains on single samples)
+    sample_noisy, _ = test_dataset[0]  # Get first sample, ignore clean
+    sample_noisy = sample_noisy.unsqueeze(0).to(device)  # Add batch dim: [1, 2, F, T]
+    
+    # ZSN2N self-supervised loss
+    loss = loss_func(sample_noisy, model)
+    
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
@@ -108,23 +106,27 @@ def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs,
 
     for e in tqdm(range(epochs)):
 
-        # ---- initial evaluation only if supervised ----
-        if e == 0 and training_type == "Noise2Clean":
-            print("Pre-training evaluation")
-            testmet = getMetricsonLoader(test_loader, net, False)
-            print("After getmetrics")
-            with open(basepath + "/results.txt", "w+") as f:
-                f.write("Initial : \n")
-                f.write(str(testmet))
-                f.write("\n")
+        # # ---- initial evaluation only if supervised ----
+        # if e == 0 and training_type == "Noise2Clean":
+        #     print("Pre-training evaluation")
+        #     testmet = getMetricsonLoader(test_loader, net, False)
+        #     print("After getmetrics")
+        #     with open(basepath + "/results.txt", "w+") as f:
+        #         f.write("Initial : \n")
+        #         f.write(str(testmet))
+        #         f.write("\n")
         
-        # ---- training ----
-        if training_type == "Noise2Noise":
-            # self-supervised: directly adapt on test set
-            train_loss = train_epoch(net, test_loader, zsn2n_loss_func, optimizer, test_dataset)
-        else:
-            # supervised: train on noisy/clean pairs
-            train_loss = train_epoch(net, train_loader, zsn2n_loss_func, optimizer, test_dataset)
+        # # ---- training ----
+        # if training_type == "Noise2Noise":
+        #     # self-supervised: directly adapt on test set
+        #     train_loss = train_epoch(net, test_loader, zsn2n_loss_func, optimizer, test_dataset)
+        # else:
+        #     # supervised: train on noisy/clean pairs
+        #     train_loss = train_epoch(net, train_loader, zsn2n_loss_func, optimizer, test_dataset)
+        
+        
+        # Training (self-supervised on single test sample)
+        train_loss = train_epoch(net, test_dataset, zsn2n_loss_func, optimizer)
         
         test_loss = 0
         scheduler.step()
