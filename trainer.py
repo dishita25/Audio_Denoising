@@ -135,6 +135,8 @@ def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs)
 
         train_losses.append(train_loss)
         # test_losses.append(test_loss)
+
+        testmet = "hi"
         
         with open(basepath + "/results.txt", "a") as f:
             f.write("Epoch :" + str(e+1) + "\n" + str(testmet))
