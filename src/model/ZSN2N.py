@@ -76,7 +76,7 @@ class network(nn.Module):
 
 class network(nn.Module):
     def __init__(self, n_chan=2, chan_embed=48, n_fft=512, hop_length=256, is_istft=True):
-        super(AudioDenoiseCNN, self).__init__()
+        super(network, self).__init__()
 
         self.n_fft = n_fft
         self.hop_length = hop_length
