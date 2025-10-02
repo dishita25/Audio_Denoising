@@ -79,11 +79,20 @@ def getMetricsonLoader(loader, net, use_net=True):
                 # For ZSN2N: model predicts noise, so denoised = input - predicted_noise
                 denoised_stft = noisy.to(DEVICE) - model_output
 
-                # Convert to time domain for metrics
-                denoised_squeezed = torch.squeeze(denoised_stft, 1)
-                denoised_complex = torch.complex(denoised_squeezed[..., 0], denoised_squeezed[..., 1])
+                # CORRECT: Handle the channel dimension properly
+                denoised_squeezed = torch.squeeze(denoised_stft, 0)  # Remove batch dim: [2, 1537, 215]
+
+                # Split real and imaginary parts from channel dimension
+                real_part = denoised_squeezed[0]  # [1537, 215]
+                imag_part = denoised_squeezed[1]  # [1537, 215]
+
+                # Create complex tensor with correct shape
+                denoised_complex = torch.complex(real_part, imag_part)  # [1537, 215]
+
+                # Now istft should work
                 x_est = torch.istft(denoised_complex, n_fft=N_FFT, hop_length=HOP_LENGTH, normalized=True)
                 x_est_np = x_est.view(-1).detach().cpu().numpy()
+
                 
             else:
                 noisy_squeezed = torch.squeeze(noisy, 1)
