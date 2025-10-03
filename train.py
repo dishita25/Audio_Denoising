@@ -33,8 +33,8 @@ print(f"  Noisy STFT shape: {sample_noisy.shape}")
 print(f"  Clean STFT shape: {sample_clean.shape}")
 
 # Create data loaders
-test_loader = DataLoader(test_dataset, batch_size=1, shuffle=True)
-train_loader = DataLoader(train_dataset, batch_size=2, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
+train_loader = DataLoader(train_dataset, batch_size=2, shuffle=False)
 
 # DEBUG: Check batch dimensions
 print(f"\nBatch dimensions:")
