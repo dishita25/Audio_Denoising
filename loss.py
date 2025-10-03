@@ -67,7 +67,7 @@ def getMetricsonLoader(loader, net, use_net=True):
             end_str = "\n"
         else:
             end_str = ","
-        #print(i,end=end_str)
+
         if i in wonky_samples:
             print("Something's up with this sample. Passing...")
         else:
@@ -127,9 +127,6 @@ def getMetricsonLoader(loader, net, use_net=True):
             deg_nb = resample(x_est_np, 48000, 8000)
             pesq_nb = pesq(8000, ref_nb, deg_nb, 'nb')
 
-            #print(new_scores)
-            #print(metrics.PESQ, metrics.STOI)
-
             overall_metrics[0].append(pesq_wb)
             overall_metrics[1].append(pesq_nb)
             overall_metrics[2].append(metrics.SNR)
@@ -160,37 +157,7 @@ def mse(gt: torch.Tensor, pred:torch.Tensor)-> torch.Tensor:
     loss = torch.nn.MSELoss()
     return loss(gt,pred)
 
-# def pair_downsampler(img):
-#     #img has shape B C H W
-#     c = img.shape[1]
 
-#     filter1 = torch.FloatTensor([[[[0 ,0.5],[0.5, 0]]]]).to(img.device)
-#     filter1 = filter1.repeat(c,1, 1, 1)
-
-#     filter2 = torch.FloatTensor([[[[0.5 ,0],[0, 0.5]]]]).to(img.device)
-#     filter2 = filter2.repeat(c,1, 1, 1)
-
-#     output1 = F.conv2d(img, filter1, stride=2, groups=c)
-#     output2 = F.conv2d(img, filter2, stride=2, groups=c)
-
-#     return output1, output2
-
-# def zsn2n_loss_func(noisy_stft, model):
-#     noisy1, noisy2 = pair_downsampler(noisy_stft)
-#     pred1 = noisy1 - model(noisy1)
-#     pred2 = noisy2 - model(noisy2)
-#     loss_res = 0.5 * (mse(noisy1, pred2) + mse(noisy2, pred1))
-
-#     noisy_denoised = noisy_stft - model(noisy_stft)
-#     denoised1, denoised2 = pair_downsampler(noisy_denoised)
-#     loss_cons = 0.5 * (mse(pred1, denoised1) + mse(pred2, denoised2))
-
-#     return loss_res + loss_cons
-
-
-
-import torch
-import torch.nn.functional as F
 
 mse = torch.nn.MSELoss()
 
@@ -230,12 +197,13 @@ def zsn2n_loss_func(noisy_stft: torch.Tensor, model: torch.nn.Module):
     # Split into two noisy versions  
     noisy1, noisy2 = pair_downsampler(noisy_stft)
     
-    # Model predictions - NOTE: ZSN2N model should return noise, not clean signal
-    noise1 = model(noisy1)  # Predict noise directly
-    noise2 = model(noisy2)  # Predict noise directly
+    # Predict noise directly
+    noise1 = model(noisy1)  
+    noise2 = model(noisy2)
     
-    pred1 = noisy1 - noise1  # Denoised = noisy - predicted_noise
-    pred2 = noisy2 - noise2  # Denoised = noisy - predicted_noise
+    # Denoised = noisy - predicted_noise
+    pred1 = noisy1 - noise1  
+    pred2 = noisy2 - noise2
     
     # Cross-prediction loss (key ZSN2N innovation)
     loss_res = 0.5 * (mse(pred1, noisy2) + mse(pred2, noisy1))
