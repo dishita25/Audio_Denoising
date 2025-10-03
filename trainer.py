@@ -69,6 +69,7 @@ def train_epoch(model, test_dataset, loss_func, optimizer, device="cuda"):
     
     # ZSN2N self-supervised loss
     loss = loss_func(sample_noisy, model)
+    print("********Losses**********")
     print(loss)
     
     optimizer.zero_grad()
