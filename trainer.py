@@ -143,6 +143,11 @@ def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs,
                     denoised_wav = stft_to_wav(denoised_x) 
                     clean_wav = stft_to_wav(clean_x)
                     
+                    all_amplitudes = np.concatenate([noisy_wav, denoised_wav, clean_wav])
+                    y_min = np.min(all_amplitudes)
+                    y_max = np.max(all_amplitudes)
+                    y_range = max(abs(y_min), abs(y_max))
+                    
                     # Create time axis
                     time = np.arange(len(noisy_wav)) / SAMPLE_RATE
                     
@@ -153,12 +158,14 @@ def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs,
                     plt.plot(time, noisy_wav, 'r-', alpha=0.7, linewidth=0.5)
                     plt.title(f'EPOCH {e+1}: Input Noisy Signal')
                     plt.ylabel('Amplitude')
+                    plt.ylim(-y_range, y_range)
                     plt.grid(True, alpha=0.3)
                     
                     plt.subplot(3, 1, 2)
                     plt.plot(time, denoised_wav, 'b-', alpha=0.7, linewidth=0.5)
                     plt.title(f'EPOCH {e+1}: Model Denoised Output')
                     plt.ylabel('Amplitude')
+                    plt.ylim(-y_range, y_range)
                     plt.grid(True, alpha=0.3)
                     
                     plt.subplot(3, 1, 3)
@@ -166,6 +173,7 @@ def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs,
                     plt.title(f'EPOCH {e+1}: Target Clean Signal')
                     plt.ylabel('Amplitude')
                     plt.xlabel('Time (seconds)')
+                    plt.ylim(-y_range, y_range)
                     plt.grid(True, alpha=0.3)
                     
                     plt.tight_layout()
