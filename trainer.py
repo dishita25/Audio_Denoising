@@ -63,23 +63,53 @@ def test_epoch(net, test_loader, loss_fn, use_net=True):
 
 
 # this is zsn2n train for one loop
-def train_epoch(model, test_dataset, loss_func, optimizer, device="cuda"):
-    model.train()
+# def train_epoch(model, test_dataset, loss_func, optimizer, device="cuda"):
+#     model.train()
     
-    # Get single noisy sample (ZSN2N trains on single samples)
-    sample_noisy, _ = test_dataset[0]  # Get first sample, ignore clean
-    sample_noisy = sample_noisy.unsqueeze(0).to(device)  # Add batch dim: [1, 2, F, T]
+#     # Get single noisy sample (ZSN2N trains on single samples)
+#     sample_noisy, _ = test_dataset[0]  # Get first sample, ignore clean
+#     sample_noisy = sample_noisy.unsqueeze(0).to(device)  # Add batch dim: [1, 2, F, T]
     
-    # ZSN2N self-supervised loss
-    loss = loss_func(sample_noisy, model)
-    print("********Losses**********")
-    print(loss)
+#     # ZSN2N self-supervised loss
+#     loss = loss_func(sample_noisy, model)
+#     print("********Losses**********")
+#     print(loss)
     
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
+#     optimizer.zero_grad()
+#     loss.backward()
+#     optimizer.step()
 
-    return loss.item()
+#     return loss.item()
+
+#ORIGINAL CODE
+def train_epoch(net, train_loader, loss_fn, optimizer):
+    net.train()
+    train_ep_loss = 0.
+    counter = 0
+    for noisy_x, clean_x in train_loader:
+
+        noisy_x, clean_x = noisy_x.to(DEVICE), clean_x.to(DEVICE)
+
+        # zero  gradients
+        net.zero_grad()
+
+        # get the output from the model
+        pred_x = net(noisy_x)
+
+        # calculate loss
+        loss = loss_fn(noisy_x, pred_x, clean_x)
+        loss.backward()
+        optimizer.step()
+
+        train_ep_loss += loss.item() 
+        counter += 1
+
+    train_ep_loss /= counter
+
+    # clear cache
+    gc.collect()
+    torch.cuda.empty_cache()
+    return train_ep_loss
 
 
 
@@ -92,116 +122,176 @@ def denoise(model, noisy_img):
 
 
 
-def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs, test_dataset):
+# def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs, test_dataset):
+    
+#     train_losses = []
+#     test_losses = []
+
+#     for e in tqdm(range(epochs)):
+
+#         # Training (self-supervised on single test sample)
+#         train_loss = train_epoch(net, test_dataset, zsn2n_loss_func, optimizer)
+        
+#         test_loss = 0
+#         scheduler.step()
+        
+#         print("Saving model....")
+        
+#         # ---- evaluation ----
+#         with torch.no_grad():
+#             test_loss, testmet = test_epoch(net, test_loader, zsn2n_loss_func, use_net=True)
+
+
+#         if e == 0 or (e + 1) % 5 == 0:  # Show plots at epoch 1 and every 5th epoch
+#             print(f"=== EPOCH {e+1}: SHOWING MODEL DENOISING RESULTS ===")
+            
+#             # Get a test sample
+#             net.eval()
+#             with torch.no_grad():
+#                 for noisy_x, clean_x in test_loader:
+#                     noisy_x = noisy_x.to(DEVICE)
+#                     clean_x = clean_x.to(DEVICE)
+                    
+#                     # Get model prediction - ZSN2N predicts NOISE
+#                     predicted_noise = net(noisy_x)
+                    
+#                     # Get denoised signal by subtracting predicted noise
+#                     denoised_x = noisy_x - predicted_noise
+                    
+#                     # Convert STFT to waveform for plotting
+#                     def stft_to_wav(stft_tensor):
+#                         if len(stft_tensor.shape) == 4:
+#                             stft_tensor = stft_tensor.squeeze(0)  # Remove batch dim
+#                         real = stft_tensor[0].cpu()
+#                         imag = stft_tensor[1].cpu()
+#                         complex_stft = torch.complex(real, imag)
+#                         wav = torch.istft(complex_stft, n_fft=N_FFT, hop_length=HOP_LENGTH, normalized=True)
+#                         return wav.numpy()
+                    
+#                     # Convert all to waveforms
+#                     noisy_wav = stft_to_wav(noisy_x)
+#                     denoised_wav = stft_to_wav(denoised_x) 
+#                     clean_wav = stft_to_wav(clean_x)
+                    
+#                     all_amplitudes = np.concatenate([noisy_wav, denoised_wav, clean_wav])
+#                     y_min = np.min(all_amplitudes)
+#                     y_max = np.max(all_amplitudes)
+#                     y_range = max(abs(y_min), abs(y_max))
+                    
+#                     # Create time axis
+#                     time = np.arange(len(noisy_wav)) / SAMPLE_RATE
+                    
+#                     # Plot the results
+#                     plt.figure(figsize=(15, 10))
+                    
+#                     plt.subplot(3, 1, 1)
+#                     plt.plot(time, noisy_wav, 'r-', alpha=0.7, linewidth=0.5)
+#                     plt.title(f'EPOCH {e+1}: Input Noisy Signal')
+#                     plt.ylabel('Amplitude')
+#                     plt.ylim(-y_range, y_range)
+#                     plt.grid(True, alpha=0.3)
+                    
+#                     plt.subplot(3, 1, 2)
+#                     plt.plot(time, denoised_wav, 'b-', alpha=0.7, linewidth=0.5)
+#                     plt.title(f'EPOCH {e+1}: Model Denoised Output')
+#                     plt.ylabel('Amplitude')
+#                     plt.ylim(-y_range, y_range)
+#                     plt.grid(True, alpha=0.3)
+                    
+#                     plt.subplot(3, 1, 3)
+#                     plt.plot(time, clean_wav, 'g-', alpha=0.7, linewidth=0.5)
+#                     plt.title(f'EPOCH {e+1}: Target Clean Signal')
+#                     plt.ylabel('Amplitude')
+#                     plt.xlabel('Time (seconds)')
+#                     plt.ylim(-y_range, y_range)
+#                     plt.grid(True, alpha=0.3)
+                    
+#                     plt.tight_layout()
+#                     plt.savefig(f'/kaggle/working/epoch_{e+1}_denoising_result.png', dpi=150)
+#                     plt.show()
+                    
+#                     print(f"Denoising result saved as epoch_{e+1}_denoising_result.png")
+#                     break
+
+
+#         train_losses.append(train_loss)
+#         test_losses.append(test_loss)
+
+#         #testmet = "hi"
+        
+#         with open(basepath + "/results.txt", "a") as f:
+#             f.write("Epoch :" + str(e+1) + "\n" + str(testmet))
+#             f.write("\n")
+        
+#         print("Results written")
+        
+#         torch.save(net.state_dict(), basepath + '/Weights/dc20_model_' + str(e+1) + '.pth')
+#         torch.save(optimizer.state_dict(), basepath + '/Weights/dc20_opt_' + str(e+1) + '.pth')
+        
+#         print("Models saved")
+
+#         # clear cache
+#         torch.cuda.empty_cache()
+#         gc.collect()
+    
+#     return train_loss, test_loss
+
+
+#ORIGINAL CODE
+def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs):
     
     train_losses = []
     test_losses = []
 
     for e in tqdm(range(epochs)):
 
-        # Training (self-supervised on single test sample)
-        train_loss = train_epoch(net, test_dataset, zsn2n_loss_func, optimizer)
+        # first evaluating for comparison
         
+        if e == 0 and training_type=="Noise2Clean":
+            print("Pre-training evaluation")
+            #with torch.no_grad():
+            #    test_loss,testmet = test_epoch(net, test_loader, loss_fn,use_net=False)
+            #print("Had to load model.. checking if deets match")
+            testmet = getMetricsonLoader(test_loader,net,False)    # again, modified cuz im loading
+            #test_losses.append(test_loss)
+            #print("Loss before training:{:.6f}".format(test_loss))
+        
+            with open(basepath + "/results.txt","w+") as f:
+                f.write("Initial : \n")
+                f.write(str(testmet))
+                f.write("\n")
+        
+        
+        train_loss = train_epoch(net, train_loader, loss_fn, optimizer)
         test_loss = 0
         scheduler.step()
-        
         print("Saving model....")
         
-        # ---- evaluation ----
         with torch.no_grad():
-            test_loss, testmet = test_epoch(net, test_loader, zsn2n_loss_func, use_net=True)
-
-
-        if e == 0 or (e + 1) % 5 == 0:  # Show plots at epoch 1 and every 5th epoch
-            print(f"=== EPOCH {e+1}: SHOWING MODEL DENOISING RESULTS ===")
-            
-            # Get a test sample
-            net.eval()
-            with torch.no_grad():
-                for noisy_x, clean_x in test_loader:
-                    noisy_x = noisy_x.to(DEVICE)
-                    clean_x = clean_x.to(DEVICE)
-                    
-                    # Get model prediction - ZSN2N predicts NOISE
-                    predicted_noise = net(noisy_x)
-                    
-                    # Get denoised signal by subtracting predicted noise
-                    denoised_x = noisy_x - predicted_noise
-                    
-                    # Convert STFT to waveform for plotting
-                    def stft_to_wav(stft_tensor):
-                        if len(stft_tensor.shape) == 4:
-                            stft_tensor = stft_tensor.squeeze(0)  # Remove batch dim
-                        real = stft_tensor[0].cpu()
-                        imag = stft_tensor[1].cpu()
-                        complex_stft = torch.complex(real, imag)
-                        wav = torch.istft(complex_stft, n_fft=N_FFT, hop_length=HOP_LENGTH, normalized=True)
-                        return wav.numpy()
-                    
-                    # Convert all to waveforms
-                    noisy_wav = stft_to_wav(noisy_x)
-                    denoised_wav = stft_to_wav(denoised_x) 
-                    clean_wav = stft_to_wav(clean_x)
-                    
-                    all_amplitudes = np.concatenate([noisy_wav, denoised_wav, clean_wav])
-                    y_min = np.min(all_amplitudes)
-                    y_max = np.max(all_amplitudes)
-                    y_range = max(abs(y_min), abs(y_max))
-                    
-                    # Create time axis
-                    time = np.arange(len(noisy_wav)) / SAMPLE_RATE
-                    
-                    # Plot the results
-                    plt.figure(figsize=(15, 10))
-                    
-                    plt.subplot(3, 1, 1)
-                    plt.plot(time, noisy_wav, 'r-', alpha=0.7, linewidth=0.5)
-                    plt.title(f'EPOCH {e+1}: Input Noisy Signal')
-                    plt.ylabel('Amplitude')
-                    plt.ylim(-y_range, y_range)
-                    plt.grid(True, alpha=0.3)
-                    
-                    plt.subplot(3, 1, 2)
-                    plt.plot(time, denoised_wav, 'b-', alpha=0.7, linewidth=0.5)
-                    plt.title(f'EPOCH {e+1}: Model Denoised Output')
-                    plt.ylabel('Amplitude')
-                    plt.ylim(-y_range, y_range)
-                    plt.grid(True, alpha=0.3)
-                    
-                    plt.subplot(3, 1, 3)
-                    plt.plot(time, clean_wav, 'g-', alpha=0.7, linewidth=0.5)
-                    plt.title(f'EPOCH {e+1}: Target Clean Signal')
-                    plt.ylabel('Amplitude')
-                    plt.xlabel('Time (seconds)')
-                    plt.ylim(-y_range, y_range)
-                    plt.grid(True, alpha=0.3)
-                    
-                    plt.tight_layout()
-                    plt.savefig(f'/kaggle/working/epoch_{e+1}_denoising_result.png', dpi=150)
-                    plt.show()
-                    
-                    print(f"Denoising result saved as epoch_{e+1}_denoising_result.png")
-                    break
-
+            test_loss, testmet = test_epoch(net, test_loader, loss_fn,use_net=True)
 
         train_losses.append(train_loss)
         test_losses.append(test_loss)
-
-        #testmet = "hi"
         
-        with open(basepath + "/results.txt", "a") as f:
-            f.write("Epoch :" + str(e+1) + "\n" + str(testmet))
+        #print("skipping testing cuz peak autism idk")
+        
+        with open(basepath + "/results.txt","a") as f:
+            f.write("Epoch :"+str(e+1) + "\n" + str(testmet))
             f.write("\n")
         
-        print("Results written")
+        print("OPed to txt")
         
-        torch.save(net.state_dict(), basepath + '/Weights/dc20_model_' + str(e+1) + '.pth')
-        torch.save(optimizer.state_dict(), basepath + '/Weights/dc20_opt_' + str(e+1) + '.pth')
+        torch.save(net.state_dict(), basepath +'/Weights/dc20_model_'+str(e+1)+'.pth')
+        torch.save(optimizer.state_dict(), basepath+'/Weights/dc20_opt_'+str(e+1)+'.pth')
         
         print("Models saved")
 
         # clear cache
         torch.cuda.empty_cache()
         gc.collect()
-    
+
+        #print("Epoch: {}/{}...".format(e+1, epochs),
+        #              "Loss: {:.6f}...".format(train_loss),
+        #              "Test Loss: {:.6f}".format(test_loss))
     return train_loss, test_loss
+
