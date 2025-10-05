@@ -67,4 +67,4 @@ optimizer = torch.optim.Adam(zsn2n.parameters())
 loss_fn = zsn2n_loss_func
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.1)
 
-train_losses, test_losses = train(zsn2n, train_loader, test_loader, loss_fn, optimizer, scheduler, 50, test_dataset) # EPOCHS 
+train_losses, test_losses = train(zsn2n, train_loader, test_loader, loss_fn, optimizer, scheduler, 5, test_dataset) # EPOCHS 
