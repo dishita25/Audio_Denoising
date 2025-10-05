@@ -31,25 +31,45 @@ class CConv2d(nn.Module):
         nn.init.xavier_uniform_(self.im_conv.weight)
         
         
+    # def forward(self, x):
+    #     print("Inside CConv2D layer")
+    #     print(x.shape)
+    #     x_real = x[..., 0]
+    #     x_im = x[..., 1]
+        
+    #     c_real = self.real_conv(x_real) - self.im_conv(x_im)
+    #     c_im = self.im_conv(x_real) + self.real_conv(x_im)
+        
+    #     output = torch.stack([c_real, c_im], dim=-1)
+    #     print(output.shape)
+    #     return output
+
+
     def forward(self, x):
         print("Inside CConv2D layer")
         print(x.shape)
-        # x_real = x[..., 0]
-        # x_im = x[..., 1]
-
-        x_real = x[:, 0, :, :]  
-        x_im = x[:, 1, :, :]    
-
-        x_real = x_real.unsqueeze(1)  # Shape: [batch, 1, freq, time]
-        x_im = x_im.unsqueeze(1)      # Shape: [batch, 1, freq, time]
-
-        
+        if x.dim() == 5:  # Handle 5D input [batch, channels, freq, time, 2
+            x_real = x[..., 0]  # [batch, channels, freq, time]
+            x_im = x[..., 1]    # [batch, channels, freq, time]
+        elif x.dim() == 4:  # Handle 4D input [batch, 2*channels, freq, time]
+            channels = x.shape[1] // 2
+            x_real = x[:, :channels, :, :]      # Real channels
+            x_im = x[:, channels:, :, :]        # Imaginary channels
+        else:
+            raise ValueError(f"Expected 4D or 5D input, got {x.dim()}D")
+    
         c_real = self.real_conv(x_real) - self.im_conv(x_im)
         c_im = self.im_conv(x_real) + self.real_conv(x_im)
-        
-        output = torch.stack([c_real, c_im], dim=-1)
+    
+    # Output in 4D format: interleave real/imaginary channels
+        batch, out_channels, freq, time = c_real.shape
+        output = torch.zeros(batch, out_channels * 2, freq, time, device=x.device, dtype=x.dtype)
+        output[:, 0::2, :, :] = c_real  # Even indices = real
+        output[:, 1::2, :, :] = c_im    # Odd indices = imaginary
+    
         print(output.shape)
         return output
+
     
 
 class CConvTranspose2d(nn.Module):
