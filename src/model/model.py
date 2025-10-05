@@ -34,8 +34,15 @@ class CConv2d(nn.Module):
     def forward(self, x):
         print("Inside CConv2D layer")
         print(x.shape)
-        x_real = x[..., 0]
-        x_im = x[..., 1]
+        # x_real = x[..., 0]
+        # x_im = x[..., 1]
+
+        x_real = x[:, 0, :, :]  
+        x_im = x[:, 1, :, :]    
+
+        x_real = x_real.unsqueeze(1)  # Shape: [batch, 1, freq, time]
+        x_im = x_im.unsqueeze(1)      # Shape: [batch, 1, freq, time]
+
         
         c_real = self.real_conv(x_real) - self.im_conv(x_im)
         c_im = self.im_conv(x_real) + self.real_conv(x_im)
