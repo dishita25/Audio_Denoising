@@ -58,7 +58,7 @@ class SpeechDataset(Dataset):
         self.len_ = len(self.noisy_files)
         
         # fixed len
-        self.max_len = 165000
+        self.max_len = 82500 #165000
 
     
     def __len__(self):
@@ -97,10 +97,14 @@ class SpeechDataset(Dataset):
         current_len = waveform.shape[1]
         
         output = np.zeros((1, self.max_len), dtype='float32')
-        output[0, -current_len:] = waveform[0, :self.max_len]
-        output = torch.from_numpy(output)
         
-        return output
+        if current_len > self.max_len:
+            start_idx = current_len - self.max_len
+            output[0, -self.max_len:] = waveform[0, start_idx:]
+        else:
+            output[0, -current_len:] = waveform[0, :current_len]
+        
+        return torch.from_numpy(output)
 
 train_input_files = sorted(list(TRAIN_INPUT_DIR.rglob('*.wav')))
 train_target_files = sorted(list(TRAIN_TARGET_DIR.rglob('*.wav')))

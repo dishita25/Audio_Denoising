@@ -135,7 +135,7 @@ def load_audio_file(file_path='./sample_audio.wav'):
     waveform = np.reshape(waveform, -1)
     return waveform
 
-def save_audio_file(np_array=np.array([0.5]*1000),file_path='./sample_audio.wav', sample_rate=48000, bit_precision=16):
+def save_audio_file(np_array=np.array([0.5]*1000),file_path='./sample_audio.wav', sample_rate=24000, bit_precision=16):
     np_array = np.reshape(np_array, (1,-1))
     torch_tensor = torch.from_numpy(np_array)
     torchaudio.save(file_path, torch_tensor, sample_rate, precision=bit_precision)

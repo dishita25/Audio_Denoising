@@ -190,7 +190,7 @@ def load_audio_file(file_path='./sample_audio.wav'):
     #print(waveform)
     return waveform
 
-def save_audio_file(np_array=np.array([0.5]*1000),file_path='./sample_audio.wav', sample_rate=48000, bit_precision=16):
+def save_audio_file(np_array=np.array([0.5]*1000),file_path='./sample_audio.wav', sample_rate=24000, bit_precision=16):
     np_array = np_array.flatten()
     np_array = np_array.astype('int16')
     #print(np_array)

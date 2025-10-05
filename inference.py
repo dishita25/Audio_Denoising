@@ -7,7 +7,7 @@ from src.device import DEVICE
 from metrics import AudioMetrics
 
 # Repeating at a lot of places
-SAMPLE_RATE = 48000
+SAMPLE_RATE = 24000
 N_FFT = (SAMPLE_RATE * 64) // 1000 
 HOP_LENGTH = (SAMPLE_RATE * 16) // 1000
 

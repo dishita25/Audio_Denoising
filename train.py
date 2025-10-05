@@ -8,7 +8,7 @@ import gc
 from src.device import *
 from src.model.dcunet import DCUnet20
 
-SAMPLE_RATE = 48000
+SAMPLE_RATE = 24000
 N_FFT = (SAMPLE_RATE * 64) // 1000 
 HOP_LENGTH = (SAMPLE_RATE * 16) // 1000 
 

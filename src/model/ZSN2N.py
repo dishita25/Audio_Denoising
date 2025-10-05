@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 
-SAMPLE_RATE = 48000
+SAMPLE_RATE = 24000
 N_FFT = (SAMPLE_RATE * 64) // 1000 
 HOP_LENGTH = (SAMPLE_RATE * 16) // 1000 
 
