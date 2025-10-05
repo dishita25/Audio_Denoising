@@ -11,7 +11,7 @@ SAMPLE_RATE = 48000
 N_FFT = (SAMPLE_RATE * 64) // 1000 
 HOP_LENGTH = (SAMPLE_RATE * 16) // 1000
 
-model_weights_path = "Pretrained_Weights/Noise2Noise/white.pth"
+model_weights_path = "/kaggle/working/Audio_Denoising/white_Noise2Noise/Weights/dc20_model_5.pth"
 
 zsn2n = network(N_FFT, HOP_LENGTH).to(DEVICE)
 optimizer = torch.optim.Adam(zsn2n.parameters())
