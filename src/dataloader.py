@@ -19,12 +19,12 @@ if noise_class == "white":
     if training_type == "Noise2Noise":
         TRAIN_TARGET_DIR = Path('/kaggle/working/Audio_Denoising/Datasets/WhiteNoise_Train_Output')
     elif training_type == "Noise2Clean":
-        TRAIN_TARGET_DIR = Path('/kaggle/working/Audio_Denoising/Datasets/clean_trainset_28spk_wav')
+        TRAIN_TARGET_DIR = Path('/kaggle/input/audio-denoising-dataset/Audio_Denoising_Dataset/clean_trainset_28spk_wav/clean_trainset_28spk_wav')
     else:
         raise Exception("Enter valid training type")
 
     TEST_NOISY_DIR = Path('/kaggle/working/Audio_Denoising/Datasets/WhiteNoise_Test_Input')
-    TEST_CLEAN_DIR = Path('/kaggle/working/Audio_Denoising/Datasets/clean_testset_wav') 
+    TEST_CLEAN_DIR = Path('/kaggle/input/audio-denoising-dataset/Audio_Denoising_Dataset/clean_testset_wav/clean_testset_wav') 
     
 else:
     TRAIN_INPUT_DIR = Path('Datasets/US_Class'+str(noise_class)+'_Train_Input')
@@ -32,12 +32,12 @@ else:
     if training_type == "Noise2Noise":
         TRAIN_TARGET_DIR = Path('Datasets/US_Class'+str(noise_class)+'_Train_Output')
     elif training_type == "Noise2Clean":
-        TRAIN_TARGET_DIR = Path('Datasets/clean_trainset_28spk_wav')
+        TRAIN_TARGET_DIR = Path('/kaggle/input/audio-denoising-dataset/Audio_Denoising_Dataset/clean_trainset_28spk_wav/clean_trainset_28spk_wav')
     else:
         raise Exception("Enter valid training type")
 
     TEST_NOISY_DIR = Path('Datasets/US_Class'+str(noise_class)+'_Test_Input')
-    TEST_CLEAN_DIR = Path('Datasets/clean_testset_wav') 
+    TEST_CLEAN_DIR = Path('/kaggle/input/audio-denoising-dataset/Audio_Denoising_Dataset/clean_testset_wav/clean_testset_wav') 
 
     
 class SpeechDataset(Dataset):

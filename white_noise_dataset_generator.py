@@ -11,8 +11,8 @@ TRAINING_OUTPUT_PATH = 'Datasets/WhiteNoise_Train_Output'
 TESTING_INPUT_PATH = 'Datasets/WhiteNoise_Test_Input'
 
 
-CLEAN_TRAINING_DIR = Path('Datasets/clean_trainset_28spk_wav')
-CLEAN_TESTING_DIR = Path("Datasets/clean_testset_wav")
+CLEAN_TRAINING_DIR = Path('/kaggle/input/audio-denoising-dataset/Audio_Denoising_Dataset/clean_trainset_28spk_wav/clean_trainset_28spk_wav')
+CLEAN_TESTING_DIR = Path("/kaggle/input/audio-denoising-dataset/Audio_Denoising_Dataset/clean_testset_wav/clean_testset_wav")
 clean_training_dir_wav_files = sorted(list(CLEAN_TRAINING_DIR.rglob('*.wav')))
 clean_testing_dir_wav_files = sorted(list(CLEAN_TESTING_DIR.rglob('*.wav')))
 print("Total training samples:",len(clean_training_dir_wav_files))
