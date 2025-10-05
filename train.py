@@ -60,11 +60,11 @@ gc.collect()
 torch.cuda.empty_cache()
 
 # x = train_loader[1][0] 
-zsn2n = network(n_chan=2, chan_embed=48).to(DEVICE) 
+zsn2n = DCUnet20(N_FFT, HOP_LENGTH).to(DEVICE) 
 sample_noisy = sample_noisy.to(DEVICE)
 out = zsn2n(sample_noisy)
 optimizer = torch.optim.Adam(zsn2n.parameters())
 loss_fn = zsn2n_loss_func
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.1)
 
-train_losses, test_losses = train(zsn2n, train_loader, test_loader, loss_fn, optimizer, scheduler, 5, test_dataset) # EPOCHS 
+train_losses, test_losses = train(zsn2n, train_loader, test_loader, loss_fn, optimizer, scheduler, 5) # EPOCHS 
